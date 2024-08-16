@@ -21,8 +21,7 @@ class HarmNet(nn.Module):
         self.fi = fi
         self.al = al
         self.v = v
-        self.koef = koef.reshape(koef.shape[0]*koef.shape[1])
-        self.N = koef.shape[0]
+
 
         N_fi = np.unique(self.fi).shape[0]
         N_al = np.unique(self.al).shape[0]
@@ -33,8 +32,11 @@ class HarmNet(nn.Module):
 
         # temporarily reduce size for debug purpose
         self.fi2D, self.al2D, self.v2D, self.debug_mode = make_small_debug_file(self.fi2D, self.al2D, self.v2D)
-        fc1 = nn.Linear(2, self.koef.shape[0])
-        fc2 = nn.Linear(self.N, 1)
+        self.koef = koef.reshape(1,koef.shape[0]*koef.shape[1])
+        self.N = koef.shape[0]
+        self.koef = torch.from_numpy(self.koef).float()
+        fc1 = nn.Linear(self.koef.shape[1],2)
+        fc2 = nn.Linear(2, 1)
         self.fc1 = fc1
         self.fc2 = fc2
     def forward(self,x):
@@ -81,7 +83,7 @@ if __name__ == '__main__':
 
     #from PDE import PDEnet
     pde  = HarmNet(10,fi,lb,v_torch,koef)
-
+    y = pde.forward(pde.koef)
 
 
 
