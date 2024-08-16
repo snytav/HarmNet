@@ -53,12 +53,16 @@ class HarmNet(nn.Module):
         lf = torch.sum(torch.abs(torch.from_numpy(self.rhs)-self.forward(self.koef).reshape(self.fi2D.shape[0],self.fi2D.shape[1])))
 
         n = 0
-        while lf.item() > 0.01:
+        while lf.item() > 1.5:
             optim.zero_grad()
-            lf = torch.abs(self.rhs - self.forward(self.koef))
+            lf = torch.sum(torch.abs(torch.from_numpy(self.rhs)-self.forward(self.koef).reshape(self.fi2D.shape[0],self.fi2D.shape[1])))
+            lf.backward()
             optim.step()
             print(n,lf.item())
             n = n+1
+
+        mape = torch.mean(torch.divide(torch.abs(torch.from_numpy(self.rhs) - self.forward(self.koef).reshape(self.fi2D.shape[0], self.fi2D.shape[1])),torch.abs(torch.from_numpy(self.rhs))))
+        qq = 0
 
 if __name__ == '__main__':
     crd = np.loadtxt('testgrid.grid')
