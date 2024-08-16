@@ -5,15 +5,16 @@ import pandas as pd
 
 from laplace2D import laplace2D
 
-def make_small_debug_file(fi2D,al2D,v2D):
+def make_small_debug_file(fi2D,al2D,v2D,rhs2D):
     fi2D_10  = fi2D[:10,:10]
     al2D_10  = al2D[:10, :10]
     v2D_10   = v2D[:10, :10]
+    rhs2D_10 = rhs2D[:10, :10]
     val = np.zeros((100,3))
     val[:,0] = fi2D_10.reshape(100)
     val[:,1] = al2D_10.reshape(100)
     val[:,2] = v2D_10.reshape(100)
-    return fi2D_10, al2D_10, v2D_10, True
+    return fi2D_10, al2D_10, v2D_10,rhs2D_10, True
 
 class HarmNet(nn.Module):
     def __init__(self,N,fi,al,v,koef):
@@ -31,12 +32,12 @@ class HarmNet(nn.Module):
         self.al2D = self.al.reshape(N_al, N_fi)
 
         # temporarily reduce size for debug purpose
-        self.fi2D, self.al2D, self.v2D, self.debug_mode = make_small_debug_file(self.fi2D, self.al2D, self.v2D)
+        self.fi2D, self.al2D, self.v2D,self.rhs, self.debug_mode = make_small_debug_file(self.fi2D, self.al2D, self.v2D,self.rhs)
         self.koef = koef.reshape(1,koef.shape[0]*koef.shape[1])
-        self.N = koef.shape[0]
+        self.N = N
         self.koef = torch.from_numpy(self.koef).float()
-        fc1 = nn.Linear(self.koef.shape[1],2)
-        fc2 = nn.Linear(2, 1)
+        fc1 = nn.Linear(self.koef.shape[1],N)
+        fc2 = nn.Linear(N, self.fi2D.shape[0]*self.fi2D.shape[1])
         self.fc1 = fc1
         self.fc2 = fc2
     def forward(self,x):
@@ -49,7 +50,7 @@ class HarmNet(nn.Module):
 
         optim = torch.optim.Adam(self.parameters(),lr=0.01)
 
-        lf = torch.abs(self.rhs-self.forward(self.koef))
+        lf = torch.sum(torch.abs(torch.from_numpy(self.rhs)-self.forward(self.koef).reshape(self.fi2D.shape[0],self.fi2D.shape[1])))
 
         n = 0
         while lf.item() > 0.01:
@@ -84,6 +85,7 @@ if __name__ == '__main__':
     #from PDE import PDEnet
     pde  = HarmNet(10,fi,lb,v_torch,koef)
     y = pde.forward(pde.koef)
+    pde.train()
 
 
 
