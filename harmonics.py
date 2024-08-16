@@ -61,7 +61,12 @@ class HarmNet(nn.Module):
             print(n,lf.item())
             n = n+1
 
-        mape = torch.mean(torch.divide(torch.abs(torch.from_numpy(self.rhs) - self.forward(self.koef).reshape(self.fi2D.shape[0], self.fi2D.shape[1])),torch.abs(torch.from_numpy(self.rhs))))
+        mape_torch = torch.mean(torch.divide(torch.abs(torch.from_numpy(self.rhs) - self.forward(self.koef).reshape(self.fi2D.shape[0], self.fi2D.shape[1])),torch.abs(torch.from_numpy(self.rhs))))
+        a = self.rhs
+        a_tilde = self.forward(self.koef).reshape(self.fi2D.shape[0], self.fi2D.shape[1]).detach().numpy()
+
+        from sklearn.metrics import mean_absolute_percentage_error
+        mape = mean_absolute_percentage_error(a,a_tilde)
         qq = 0
 
 if __name__ == '__main__':
